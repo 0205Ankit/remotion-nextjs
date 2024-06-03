@@ -33,17 +33,22 @@ export const Main = ({ videoUrl, introUrl, outroUrl }: MainProps) => {
   }, [intro, outro, config.DURATION_IN_FRAMES, videoUrl]);
 
   useEffect(() => {
-    let additionalFrames = 0;
-    if (intro) additionalFrames += 150;
-    if (outro) additionalFrames += 150;
-
-    if (additionalFrames > 0) {
-      setConfig((prevConfig) => ({
-        ...prevConfig,
-        DURATION_IN_FRAMES: prevConfig.DURATION_IN_FRAMES + additionalFrames,
-      }));
+    if (intro) {
+      setConfig({
+        ...config,
+        DURATION_IN_FRAMES: config.DURATION_IN_FRAMES + 150,
+      });
     }
-  }, [intro, outro]);
+  }, [intro]);
+
+  useEffect(() => {
+    if (outro) {
+      setConfig({
+        ...config,
+        DURATION_IN_FRAMES: config.DURATION_IN_FRAMES + 150,
+      });
+    }
+  }, [outro]);
 
   return (
     <AbsoluteFill style={container}>
