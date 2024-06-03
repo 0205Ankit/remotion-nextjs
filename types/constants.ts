@@ -2,14 +2,13 @@ import { z } from "zod";
 export const COMP_NAME = "MyComp";
 
 export const CompositionProps = z.object({
-  title: z.string(),
+  videoUrl: z.string().url(),
+  introUrl: z.string().url().nullable(),
+  outroUrl: z.string().url().nullable(),
 });
 
 export const defaultMyCompProps: z.infer<typeof CompositionProps> = {
-  title: "Next.js and Remotion",
+  videoUrl: "https://utfs.io/f/b714e379-638f-434a-b487-bf6bf9988809-fwmnfw.mp4",
+  introUrl: null,
+  outroUrl: null,
 };
-
-export const DURATION_IN_FRAMES = 200;
-export const VIDEO_WIDTH = 1280;
-export const VIDEO_HEIGHT = 720;
-export const VIDEO_FPS = 30;

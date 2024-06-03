@@ -1,17 +1,10 @@
-import { z } from "zod";
-import {
-  AbsoluteFill,
-  Sequence,
-  spring,
-  useCurrentFrame,
-  useVideoConfig,
-} from "remotion";
-import { CompositionProps } from "../../types/constants";
-import { NextLogo } from "./NextLogo";
-import { loadFont, fontFamily } from "@remotion/google-fonts/Inter";
-import React, { useMemo } from "react";
-import { Rings } from "./Rings";
-import { TextFade } from "./TextFade";
+/* eslint-disable react-hooks/exhaustive-deps */
+"use client";
+import { AbsoluteFill, Img, Sequence, Video } from "remotion";
+import { loadFont } from "@remotion/google-fonts/Inter";
+import React, { useEffect, useMemo } from "react";
+import { useConfig } from "../../context/configContext";
+import { getVideosTimeIntervals } from "../../utils/remotion";
 
 loadFont();
 
@@ -19,45 +12,89 @@ const container: React.CSSProperties = {
   backgroundColor: "white",
 };
 
-const logo: React.CSSProperties = {
-  justifyContent: "center",
-  alignItems: "center",
+type MainProps = {
+  videoUrl: string;
+  introUrl: string | null;
+  outroUrl: string | null;
 };
 
-export const Main = ({ title }: z.infer<typeof CompositionProps>) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const Main = ({ videoUrl, introUrl, outroUrl }: MainProps) => {
+  const { config, setConfig } = useConfig();
+  const intro = useMemo(() => introUrl, [introUrl]);
+  const outro = useMemo(() => outroUrl, [outroUrl]);
 
-  const transitionStart = 2 * fps;
-  const transitionDuration = 1 * fps;
+  const videosTimeIntervals = useMemo(() => {
+    return getVideosTimeIntervals({
+      intro,
+      outro,
+      DURATION_IN_FRAMES: config.DURATION_IN_FRAMES,
+      videoUrl,
+    });
+  }, [intro, outro, config.DURATION_IN_FRAMES, videoUrl]);
 
-  const logoOut = spring({
-    fps,
-    frame,
-    config: {
-      damping: 200,
-    },
-    durationInFrames: transitionDuration,
-    delay: transitionStart,
-  });
+  useEffect(() => {
+    let additionalFrames = 0;
+    if (intro) additionalFrames += 150;
+    if (outro) additionalFrames += 150;
 
-  const titleStyle: React.CSSProperties = useMemo(() => {
-    return { fontFamily, fontSize: 70 };
-  }, []);
+    if (additionalFrames > 0) {
+      setConfig((prevConfig) => ({
+        ...prevConfig,
+        DURATION_IN_FRAMES: prevConfig.DURATION_IN_FRAMES + additionalFrames,
+      }));
+    }
+  }, [intro, outro]);
 
   return (
     <AbsoluteFill style={container}>
-      <Sequence durationInFrames={transitionStart + transitionDuration}>
-        <Rings outProgress={logoOut}></Rings>
-        <AbsoluteFill style={logo}>
-          <NextLogo outProgress={logoOut}></NextLogo>
+      {intro && (
+        <Sequence
+          from={videosTimeIntervals.intro ? videosTimeIntervals.intro[0] : 0}
+          durationInFrames={
+            videosTimeIntervals.intro
+              ? videosTimeIntervals.intro[1] - videosTimeIntervals.intro[0]
+              : 120
+          }
+        >
+          <AbsoluteFill>
+            {intro.endsWith(".mp4") ? (
+              <Video src={intro} />
+            ) : (
+              <Img src={intro} />
+            )}
+          </AbsoluteFill>
+        </Sequence>
+      )}
+      <Sequence
+        from={videosTimeIntervals.video ? videosTimeIntervals.video[0] : 0}
+        durationInFrames={
+          videosTimeIntervals.video
+            ? videosTimeIntervals.video[1] - videosTimeIntervals.video[0]
+            : 120
+        }
+      >
+        <AbsoluteFill>
+          <Video src={videoUrl} />
         </AbsoluteFill>
       </Sequence>
-      <Sequence from={transitionStart + transitionDuration / 2}>
-        <TextFade>
-          <h1 style={titleStyle}>{title}</h1>
-        </TextFade>
-      </Sequence>
+      {outro && (
+        <Sequence
+          from={videosTimeIntervals.outro ? videosTimeIntervals.outro[0] : 0}
+          durationInFrames={
+            videosTimeIntervals.outro
+              ? videosTimeIntervals.outro[1] - videosTimeIntervals.outro[0]
+              : 120
+          }
+        >
+          <AbsoluteFill>
+            {outro.endsWith(".mp4") ? (
+              <Video src={outro} />
+            ) : (
+              <Img src={outro} />
+            )}
+          </AbsoluteFill>
+        </Sequence>
+      )}
     </AbsoluteFill>
   );
 };

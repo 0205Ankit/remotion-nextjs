@@ -4,18 +4,12 @@ import { Player } from "@remotion/player";
 import type { NextPage } from "next";
 import React, { useMemo, useState } from "react";
 import { Main } from "../remotion/MyComp/Main";
-import {
-  CompositionProps,
-  defaultMyCompProps,
-  DURATION_IN_FRAMES,
-  VIDEO_FPS,
-  VIDEO_HEIGHT,
-  VIDEO_WIDTH,
-} from "../types/constants";
+import { CompositionProps, defaultMyCompProps } from "../types/constants";
 import { z } from "zod";
-import { RenderControls } from "../components/RenderControls";
-import { Tips } from "../components/Tips/Tips";
 import { Spacing } from "../components/Spacing";
+import UploadComponent from "../components/uploadComponent";
+import { RenderControls } from "../components/RenderControls";
+import { useConfig } from "../context/configContext";
 
 const container: React.CSSProperties = {
   maxWidth: 768,
@@ -36,13 +30,31 @@ const player: React.CSSProperties = {
 };
 
 const Home: NextPage = () => {
-  const [text, setText] = useState<string>(defaultMyCompProps.title);
+  const { config } = useConfig();
+  const { VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS, DURATION_IN_FRAMES } = config;
+  const [videoUrl] = useState<string>(defaultMyCompProps.videoUrl); // in case you have to change url
+  const [introUrl, setIntroUrl] = useState<string | null>(
+    defaultMyCompProps.introUrl
+  );
+  const [outroUrl, setOutroUrl] = useState<string | null>(
+    defaultMyCompProps.outroUrl
+  );
+
+  const onIntroUpload = (url: string) => {
+    setIntroUrl(url);
+  };
+
+  const onOutroUpload = (url: string) => {
+    setOutroUrl(url);
+  };
 
   const inputProps: z.infer<typeof CompositionProps> = useMemo(() => {
     return {
-      title: text,
+      videoUrl,
+      introUrl,
+      outroUrl,
     };
-  }, [text]);
+  }, [videoUrl, introUrl, outroUrl]);
 
   return (
     <div>
@@ -60,17 +72,18 @@ const Home: NextPage = () => {
             autoPlay
             loop
           />
+          <UploadComponent
+            onIntroUpload={onIntroUpload}
+            onOutroUpload={onOutroUpload}
+            introUrl={introUrl}
+            outroUrl={outroUrl}
+          />
+          <RenderControls inputProps={inputProps}></RenderControls>
         </div>
-        <RenderControls
-          text={text}
-          setText={setText}
-          inputProps={inputProps}
-        ></RenderControls>
         <Spacing></Spacing>
         <Spacing></Spacing>
         <Spacing></Spacing>
         <Spacing></Spacing>
-        <Tips></Tips>
       </div>
     </div>
   );
